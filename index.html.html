@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Statement Builder — ACLI</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #063758;
+    --green: #00AF86;
+    --blue: #00ADEF;
+    --light-bg: #f0f7fb;
+    --card-bg: #ffffff;
+    --muted: #5a7a8a;
+    --border: #d0e2ec;
+    --text: #1D252B;
+    --gray: #888888;
+    --light-green: #e8f7f3;
+    --light-navy: #eaf1f5;
+    --warning: #c0392b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--light-bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #0a4a72 60%, var(--green) 100%);
+    color: white;
+    text-align: center;
+    padding: 48px 24px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 70%, rgba(0,175,134,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(0,173,239,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 600;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .hero h1 em {
+    color: var(--green);
+    font-style: italic;
+    font-weight: 700;
+  }
+
+  .hero p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    max-width: 520px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    padding: 12px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    padding: 0 4px;
+  }
+
+  .progress-bar-track {
+    height: 8px;
+    background: var(--light-navy);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--navy), var(--blue));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Step cards */
+  .step {
+    display: none;
+    animation: fadeIn 0.35s ease;
+  }
+
+  .step.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 36px 32px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(6,55,88,0.06);
+  }
+
+  .step-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+
+  .step-desc {
+    font-size: 14.5px;
+    color: #4a5a63;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .field-group {
+    margin-bottom: 24px;
+  }
+
+  .field-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .field-label .req {
+    color: var(--warning);
+    margin-left: 2px;
+  }
+
+  input[type="text"],
+  textarea {
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #f8fbfd;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,173,239,0.12);
+    background: white;
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.65;
+  }
+
+  textarea.large {
+    min-height: 160px;
+  }
+
+  /* Quote block */
+  .quote-block {
+    background: var(--light-navy);
+    border-left: 4px solid var(--green);
+    border-radius: 0 12px 12px 0;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+
+  .quote-text {
+    font-size: 15px;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  .quote-author {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* Inspiration toggle */
+  .inspiration-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--blue);
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+    user-select: none;
+  }
+
+  .inspiration-toggle:hover { text-decoration: underline; }
+
+  .inspiration-content {
+    display: none;
+    background: #f4fafa;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #4a5a63;
+    line-height: 1.7;
+    border: 1px solid #d8ede8;
+  }
+
+  .inspiration-content.open { display: block; }
+
+  /* Review sidebar on Prioritize/Refine/Finalize steps */
+  .split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .review-sidebar {
+    background: var(--light-navy);
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 13px;
+    max-height: 480px;
+    overflow-y: auto;
+  }
+
+  .review-sidebar h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .review-item {
+    margin-bottom: 14px;
+  }
+
+  .review-item-label {
+    font-weight: 600;
+    color: var(--navy);
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  .review-item-value {
+    color: #4a5a63;
+    font-size: 12.5px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .review-item-value:empty::after {
+    content: '(not yet answered)';
+    color: var(--gray);
+    font-style: italic;
+  }
+
+  /* Navigation */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    gap: 12px;
+  }
+
+  .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--navy);
+    color: white;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #084d75;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6,55,88,0.25);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--navy);
+    border: 1.5px solid var(--border);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--light-navy);
+    border-color: var(--navy);
+  }
+
+  .btn-green {
+    background: var(--green);
+    color: white;
+  }
+
+  .btn-green:hover:not(:disabled) {
+    background: #009974;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,175,134,0.3);
+  }
+
+  .btn-green:active { transform: translateY(0); }
+
+  .warning-msg {
+    background: #fef3f2;
+    border: 1px solid #fecaca;
+    color: var(--warning);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  /* Review page (step 17) */
+  .review-section {
+    margin-bottom: 20px;
+  }
+
+  .review-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--green);
+  }
+
+  .review-row {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f5;
+    font-size: 13px;
+  }
+
+  .review-row-label {
+    font-weight: 600;
+    color: var(--navy);
+    min-width: 160px;
+    flex-shrink: 0;
+  }
+
+  .review-row-value {
+    color: #4a5a63;
+    word-break: break-word;
+  }
+
+  /* Success state */
+  .success-banner {
+    text-align: center;
+    padding: 32px;
+  }
+
+  .success-banner h2 {
+    color: var(--navy);
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  .success-banner p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .download-btn-wrap {
+    margin-top: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .split-layout {
+      grid-template-columns: 1fr;
+    }
+    .step-card { padding: 24px 20px; }
+    .hero { padding: 36px 20px 32px; }
+    .review-row { flex-direction: column; gap: 4px; }
+    .review-row-label { min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">Atlas Corps Leadership Institute</div>
+  <h1>Build Your<br><em>Mission Statement</em></h1>
+  <p>A guided reflection to help you articulate your purpose, values, and the contribution you want to make in the world.</p>
+</div>
+
+<div class="container">
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-meta">
+      <span id="stepLabel">Step 1 of 17</span>
+      <span id="stepPercent">5%</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="stepsContainer"></div>
+
+  <div class="warning-msg" id="warningMsg"></div>
+
+  <div class="nav-row" id="navRow" style="display:none;">
+    <button class="btn btn-secondary" id="prevBtn">&larr; Back</button>
+    <button class="btn btn-primary" id="nextBtn">Continue &rarr;</button>
+  </div>
+</div>
+
+<script>
+// ─── DATA MODEL ───
+const data = {
+  participantName: '',
+  bestWhen: '',
+  worstWhen: '',
+  loveWork: '',
+  lovePersonal: '',
+  talents: '',
+  imagination: '',
+  vision: '',
+  character: '',
+  contribution: '',
+  conscience: '',
+  influence1: '',
+  influence2: '',
+  influence3: '',
+  balancePhysical: '',
+  balanceSocial: '',
+  balanceMental: '',
+  balanceSpiritual: '',
+  topThemes: '',
+  refinedParagraph: '',
+  finalMission: ''
+};
+
+// ─── STEP DEFINITIONS ───
+const steps = [
+  // Step 1: Welcome
+  {
+    title: 'Welcome',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Welcome to the Mission Statement Builder</div>
+        <div class="step-desc">
+          A personal mission statement acts as your inner compass. Your mission defines who you are, what you stand for, and the direction you want your life to take. Over the next several steps, you'll explore different dimensions of your identity: your strengths, passions, values, and aspirations. At the end, you'll weave them into a powerful statement.
+        </div>
+        <div class="field-group">
+          <label class="field-label">Your Full Name <span class="req">*</span></label>
+          <input type="text" id="f_participantName" placeholder="Enter your name as you'd like it to appear on your mission statement" value="${data.participantName}">
+        </div>
+      </div>
+    `,
+    save: () => { data.participantName = val('f_participantName'); },
+    validate: () => val('f_participantName').trim() ? null : 'Please enter your name to continue.'
+  },
+
+  // Step 2: Introduction + Scott Miller quote
+  {
+    title: 'Getting Started',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Before You Begin</div>
+        <div class="quote-block">
+          <div class="quote-text">"We can't form effective relationships with others if we don't know ourselves. Knowing yourself, your story, your mission, your values, and priorities — it's a requisite to leading others."</div>
+          <div class="quote-author">— Scott Miller</div>
+        </div>
+        <div class="step-desc">
+          This builder will guide you through a series of reflective prompts. Take your time with each question. You can always go back and revise.
+          <br><br>
+          Your responses will be compiled into a personal mission statement document that you can download as a PDF and submit for your assignment.
+        </div>
+      </div>
+    `,
+    save: () => {},
+    validate: () => null
+  },
+
+  // Step 3: Performance
+  {
+    title: 'Performance',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Performance</div>
+        <div class="step-desc">
+          Reflect on the moments when you are performing at your peak. What tasks are you engaged in? What kind of environment are you in? Are you working solo or collaborating? Does it involve something you're deeply interested in? Is preparation a factor in how well you perform?
+        </div>
+        <div class="field-group">
+          <label class="field-label">I am at my best when... <span class="req">*</span></label>
+          <textarea id="f_bestWhen" placeholder="Describe the conditions, tasks, or environments where you perform at your highest level...">${data.bestWhen}</textarea>
+          <div class="inspiration-toggle" onclick="toggleInspiration(this)">💡 Need some inspiration?</div>
+          <div class="inspiration-content">Think about a recent accomplishment you're proud of. What were the conditions? Were you leading, collaborating, or working independently? Was it a creative task, an analytical challenge, or a relational one?</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">I am at my worst when... <span class="req">*</span></label>
+          <textarea id="f_worstWhen" placeholder="Describe the conditions or circumstances where you struggle to show up as your best self...">${data.worstWhen}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.bestWhen = val('f_bestWhen'); data.worstWhen = val('f_worstWhen'); },
+    validate: () => {
+      if (!val('f_bestWhen').trim()) return 'Please describe when you are at your best.';
+      if (!val('f_worstWhen').trim()) return 'Please describe when you are at your worst.';
+      return null;
+    }
+  },
+
+  // Step 4: Passion
+  {
+    title: 'Passion',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Passion</div>
+        <div class="step-desc">
+          Passion fuels energy, and energy can be channeled to produce the outcomes you care about most. What are the deep passions in your life? When do you feel most energized, focused, and fully engaged?
+        </div>
+        <div class="field-group">
+          <label class="field-label">What do I truly love doing at work? <span class="req">*</span></label>
+          <textarea id="f_loveWork" placeholder="What professional activities light you up and make time disappear?">${data.loveWork}</textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">What do I truly love doing in my personal life? <span class="req">*</span></label>
+          <textarea id="f_lovePersonal" placeholder="What personal pursuits bring you the most joy and fulfillment?">${data.lovePersonal}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.loveWork = val('f_loveWork'); data.lovePersonal = val('f_lovePersonal'); },
+    validate: () => {
+      if (!val('f_loveWork').trim()) return 'Please describe what you love doing at work.';
+      if (!val('f_lovePersonal').trim()) return 'Please describe what you love doing in your personal life.';
+      return null;
+    }
+  },
+
+  // Step 5: Talents
+  {
+    title: 'Talents',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Talents</div>
+        <div class="step-desc">
+          Consider your natural talents and gifts. What do others notice and appreciate about you? Where do you feel most skilled and capable? Talents are as varied as people, and we all have them. What are yours?
+        </div>
+        <div class="field-group">
+          <label class="field-label">My natural talents and gifts are: <span class="req">*</span></label>
+          <textarea id="f_talents" placeholder="List the skills, qualities, and abilities that come naturally to you...">${data.talents}</textarea>
+          <div class="inspiration-toggle" onclick="toggleInspiration(this)">💡 Need some inspiration?</div>
+          <div class="inspiration-content">Think about compliments you often receive. What do friends, family, or colleagues say you're great at? Consider both hard skills (analysis, writing, organizing) and soft skills (empathy, humor, leadership).</div>
+        </div>
+      </div>
+    `,
+    save: () => { data.talents = val('f_talents'); },
+    validate: () => val('f_talents').trim() ? null : 'Please describe your natural talents and gifts.'
+  },
+
+  // Step 6: Imagination
+  {
+    title: 'Imagination',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Imagination</div>
+        <div class="step-desc">
+          What is your dream? If financial or social constraints were not a factor, what would you choose to pursue? Is there a goal you are working toward or an impact you hope to create?
+        </div>
+        <div class="field-group">
+          <label class="field-label">If I had unlimited time and resources, and knew I could not fail, I would: <span class="req">*</span></label>
+          <textarea id="f_imagination" placeholder="Dream big — what would you pursue, build, change, or create?">${data.imagination}</textarea>
+          <div class="inspiration-toggle" onclick="toggleInspiration(this)">💡 Need some inspiration?</div>
+          <div class="inspiration-content">Imagine you wake up ten years from now and everything has gone exactly as you hoped. What does your day look like? What have you accomplished? Who have you helped? What are people saying about the work you've done?</div>
+        </div>
+      </div>
+    `,
+    save: () => { data.imagination = val('f_imagination'); },
+    validate: () => val('f_imagination').trim() ? null : 'Please share what you would do with unlimited resources.'
+  },
+
+  // Step 7: Vision
+  {
+    title: 'Vision',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Vision</div>
+        <div class="step-desc">
+          Picture your life as an epic journey where you are the central figure. What is your journey about? What is the cause that drives you? What are you hoping to achieve? Describe what you are working to do in your life, for whom, and the outcomes you envision.
+        </div>
+        <div class="field-group">
+          <label class="field-label">My life's journey is... <span class="req">*</span></label>
+          <textarea id="f_vision" placeholder="Describe the overarching narrative of your life's purpose and direction...">${data.vision}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.vision = val('f_vision'); },
+    validate: () => val('f_vision').trim() ? null : 'Please describe your life\'s journey.'
+  },
+
+  // Step 8: Character
+  {
+    title: 'Character',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Character</div>
+        <div class="step-desc">
+          Picture your 80th birthday celebration. Who is there with you? What will the people in your life say about how you lived? How will they describe your character?
+        </div>
+        <div class="field-group">
+          <label class="field-label">I will be a person who: <span class="req">*</span></label>
+          <textarea id="f_character" placeholder="Describe the character traits and qualities you want to be known for...">${data.character}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.character = val('f_character'); },
+    validate: () => val('f_character').trim() ? null : 'Please describe the person you aspire to be.'
+  },
+
+  // Step 9: Contribution
+  {
+    title: 'Contribution',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Contribution</div>
+        <div class="step-desc">
+          What mark do you want to leave on the world? What impact do you hope to have on those around you? When everything is said and done, what will you have made possible for others?
+        </div>
+        <div class="field-group">
+          <label class="field-label">What do I see as my most important future contribution to the people who matter most in my life? <span class="req">*</span></label>
+          <textarea id="f_contribution" placeholder="Think about the legacy you want to leave and the people you want to serve...">${data.contribution}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.contribution = val('f_contribution'); },
+    validate: () => val('f_contribution').trim() ? null : 'Please describe your most important future contribution.'
+  },
+
+  // Step 10: Transition — Values & Principles intro
+  {
+    title: 'Values & Principles',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Turning Inward: Values & Principles</div>
+        <div class="step-desc">
+          Great work so far. You've explored your performance, passions, talents, dreams, vision, character, and contribution. Now let's go deeper into the values and principles that anchor everything you've described.
+          <br><br>
+          Our values and principles form the bedrock of our character, contributions, and achievements. At the very center of who we are is where we engage with our sense of purpose and our core beliefs. The next few steps will help you explore what matters most to you — your priorities, the people who inspire you, and the dimensions of a balanced life.
+        </div>
+        <div class="quote-block">
+          <div class="quote-text" style="font-size:14px;">"The key is not to prioritize what's on your schedule, but to schedule your priorities."</div>
+          <div class="quote-author">— Stephen R. Covey</div>
+        </div>
+      </div>
+    `,
+    save: () => {},
+    validate: () => null
+  },
+
+  // Step 11: Conscience
+  {
+    title: 'Conscience',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Conscience</div>
+        <div class="step-desc">
+          What have you been putting off? Sometimes the things we delay because they feel too difficult are the very things that would strengthen us the most. What do you struggle to find time for? Are there things you know you should be doing, even though you've been postponing them?
+        </div>
+        <div class="field-group">
+          <label class="field-label">I need to make the following things a priority: <span class="req">*</span></label>
+          <textarea id="f_conscience" placeholder="What commitments, habits, or goals do you need to prioritize?">${data.conscience}</textarea>
+        </div>
+      </div>
+    `,
+    save: () => { data.conscience = val('f_conscience'); },
+    validate: () => val('f_conscience').trim() ? null : 'Please describe what you need to prioritize.'
+  },
+
+  // Step 12: Influence
+  {
+    title: 'Influence',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Influence</div>
+        <div class="step-desc">
+          We are shaped by those around us. There are people in your life you likely hope to emulate — individuals who have helped form who you are today and are examples of who you aspire to become. If you could invite three people who have influenced you the most to dinner, who would they be?
+        </div>
+        <div class="field-group">
+          <label class="field-label">Person 1 — Name & the quality you admire: <span class="req">*</span></label>
+          <input type="text" id="f_influence1" placeholder="e.g., My grandmother — her quiet resilience and unconditional kindness" value="${data.influence1}">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Person 2 — Name & the quality you admire: <span class="req">*</span></label>
+          <input type="text" id="f_influence2" placeholder="e.g., A mentor — their courage to speak truth to power" value="${data.influence2}">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Person 3 — Name & the quality you admire: <span class="req">*</span></label>
+          <input type="text" id="f_influence3" placeholder="e.g., A community leader — their commitment to equity" value="${data.influence3}">
+        </div>
+      </div>
+    `,
+    save: () => {
+      data.influence1 = val('f_influence1');
+      data.influence2 = val('f_influence2');
+      data.influence3 = val('f_influence3');
+    },
+    validate: () => {
+      if (!val('f_influence1').trim()) return 'Please enter at least the first influential person.';
+      if (!val('f_influence2').trim()) return 'Please enter the second influential person.';
+      if (!val('f_influence3').trim()) return 'Please enter the third influential person.';
+      return null;
+    }
+  },
+
+  // Step 13: Balance
+  {
+    title: 'Balance',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Balance</div>
+        <div class="step-desc">
+          Think of balance as a state of fulfillment and renewal across four dimensions: Physical, Social/Emotional, Mental, and Spiritual. What is the single most important thing you can do in each area to create the greatest positive impact on your life?
+        </div>
+        <div class="field-group">
+          <label class="field-label">Physical <span class="req">*</span></label>
+          <input type="text" id="f_balancePhysical" placeholder="e.g., Commit to daily movement and rest" value="${data.balancePhysical}">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Social / Emotional <span class="req">*</span></label>
+          <input type="text" id="f_balanceSocial" placeholder="e.g., Invest in meaningful relationships and honest conversations" value="${data.balanceSocial}">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Mental <span class="req">*</span></label>
+          <input type="text" id="f_balanceMental" placeholder="e.g., Read widely and challenge my assumptions regularly" value="${data.balanceMental}">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Spiritual <span class="req">*</span></label>
+          <input type="text" id="f_balanceSpiritual" placeholder="e.g., Practice daily reflection and connect with nature" value="${data.balanceSpiritual}">
+        </div>
+      </div>
+    `,
+    save: () => {
+      data.balancePhysical = val('f_balancePhysical');
+      data.balanceSocial = val('f_balanceSocial');
+      data.balanceMental = val('f_balanceMental');
+      data.balanceSpiritual = val('f_balanceSpiritual');
+    },
+    validate: () => {
+      if (!val('f_balancePhysical').trim()) return 'Please fill in the Physical dimension.';
+      if (!val('f_balanceSocial').trim()) return 'Please fill in the Social/Emotional dimension.';
+      if (!val('f_balanceMental').trim()) return 'Please fill in the Mental dimension.';
+      if (!val('f_balanceSpiritual').trim()) return 'Please fill in the Spiritual dimension.';
+      return null;
+    }
+  },
+
+  // Step 14: Prioritize
+  {
+    title: 'Prioritize',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Prioritize</div>
+        <div class="step-desc">
+          Look at everything you've written so far and assign importance to each idea or theme. Which themes keep rising to the surface?
+          <br><br>
+          Try labeling each idea with an A, B, or C based on its importance to you. Within each letter, rank them numerically (A1, A2, B1, B2, etc.). Then reflect on your top five to seven themes below.
+        </div>
+        <div class="split-layout">
+          <div class="field-group">
+            <label class="field-label">What are your top five to seven ideas or themes? <span class="req">*</span></label>
+            <textarea class="large" id="f_topThemes" placeholder="List the most important themes that have emerged from your reflections...">${data.topThemes}</textarea>
+          </div>
+          <div class="review-sidebar" id="prioritizeReview"></div>
+        </div>
+      </div>
+    `,
+    onMount: () => {
+      const sidebar = document.getElementById('prioritizeReview');
+      sidebar.innerHTML = `
+        <h4>Your Reflections So Far</h4>
+        ${reviewItem("My life's journey is...", data.vision)}
+        ${reviewItem("I will be a person who:", data.character)}
+        ${reviewItem("My most important contribution:", data.contribution)}
+        ${reviewItem("I need to prioritize:", data.conscience)}
+        ${reviewItem("I am at my best when:", data.bestWhen)}
+        ${reviewItem("My passions at work:", data.loveWork)}
+        ${reviewItem("My talents:", data.talents)}
+        ${reviewItem("If I could not fail:", data.imagination)}
+      `;
+    },
+    save: () => { data.topThemes = val('f_topThemes'); },
+    validate: () => val('f_topThemes').trim() ? null : 'Please list your top themes.'
+  },
+
+  // Step 15: Refine
+  {
+    title: 'Refine',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Refine</div>
+        <div class="step-desc">
+          Now that you've identified your top ideas and themes, begin shaping them into a mission statement. Draft a version that captures your purpose — aim for one concise paragraph.
+        </div>
+        <div class="split-layout">
+          <div class="field-group">
+            <label class="field-label">How can you best capture these ideas in a single paragraph? <span class="req">*</span></label>
+            <textarea class="large" id="f_refinedParagraph" placeholder="Write a paragraph-length draft of your mission statement...">${data.refinedParagraph}</textarea>
+          </div>
+          <div class="review-sidebar">
+            <h4>Your Top Themes</h4>
+            ${reviewItem("Top five to seven ideas or themes:", data.topThemes)}
+          </div>
+        </div>
+      </div>
+    `,
+    save: () => { data.refinedParagraph = val('f_refinedParagraph'); },
+    validate: () => val('f_refinedParagraph').trim() ? null : 'Please write a draft paragraph.'
+  },
+
+  // Step 16: Finalize
+  {
+    title: 'Finalize',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Finalize</div>
+        <div class="step-desc">
+          Take a moment to revisit your draft from the previous step. Keep refining until it captures your values, principles, and the contribution you intend to make — distilled into a clear, concise statement. When it feels complete, move on to the final review.
+        </div>
+        <div class="split-layout">
+          <div class="field-group">
+            <label class="field-label">What is your final mission statement?</label>
+            <textarea class="large" id="f_finalMission" placeholder="Write the final, polished version of your personal mission statement...">${data.finalMission || data.refinedParagraph}</textarea>
+          </div>
+          <div class="review-sidebar">
+            <h4>Your Draft Paragraph</h4>
+            ${reviewItem("Draft:", data.refinedParagraph)}
+          </div>
+        </div>
+      </div>
+    `,
+    save: () => { data.finalMission = val('f_finalMission'); },
+    validate: () => val('f_finalMission').trim() ? null : 'Please write your final mission statement.'
+  },
+
+  // Step 17: Review + PDF
+  {
+    title: 'Review',
+    render: () => `
+      <div class="step-card">
+        <div class="step-title">Review & Download</div>
+        <div class="step-desc">
+          Thank you for taking the time to build your mission statement through the ACLI. We're glad to be part of your journey toward clarity and purpose.
+          <br><br>
+          Please review your responses below. When you're ready, click <strong>"Download PDF"</strong> to generate your completed mission statement document for submission.
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">My Mission Statement</div>
+          <div style="padding:12px 0;font-size:14px;line-height:1.7;color:var(--text);">${esc(data.finalMission)}</div>
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">Character</div>
+          ${reviewRow('I will be a person who:', data.character)}
+          ${reviewRow('What I love at work:', data.loveWork)}
+          ${reviewRow('What I love in my personal life:', data.lovePersonal)}
+          ${reviewRow('If I could not fail, I would:', data.imagination)}
+          ${reviewRow("My life's journey is:", data.vision)}
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">Contributions & Achievements</div>
+          ${reviewRow('Most important contribution:', data.contribution)}
+          ${reviewRow('My talents and gifts:', data.talents)}
+          ${reviewRow('I am at my best when:', data.bestWhen)}
+          ${reviewRow('I am at my worst when:', data.worstWhen)}
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">Values & Principles</div>
+          ${reviewRow('I need to prioritize:', data.conscience)}
+          ${reviewRow('Influence 1:', data.influence1)}
+          ${reviewRow('Influence 2:', data.influence2)}
+          ${reviewRow('Influence 3:', data.influence3)}
+          ${reviewRow('Balance — Physical:', data.balancePhysical)}
+          ${reviewRow('Balance — Social/Emotional:', data.balanceSocial)}
+          ${reviewRow('Balance — Mental:', data.balanceMental)}
+          ${reviewRow('Balance — Spiritual:', data.balanceSpiritual)}
+        </div>
+
+        <div class="download-btn-wrap" style="text-align:center;margin-top:32px;">
+          <button class="btn btn-green" onclick="generatePDF()" style="font-size:16px;padding:16px 40px;">
+            📄 Download PDF
+          </button>
+          <p style="font-size:12px;color:var(--muted);margin-top:10px;">Your PDF will include all responses above in a formatted document.</p>
+        </div>
+      </div>
+    `,
+    save: () => {},
+    validate: () => null
+  }
+];
+
+// ─── HELPERS ───
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function toggleInspiration(el) {
+  const content = el.nextElementSibling;
+  content.classList.toggle('open');
+  el.textContent = content.classList.contains('open') ? '💡 Hide inspiration' : '💡 Need some inspiration?';
+}
+
+function reviewItem(label, value) {
+  return `<div class="review-item"><div class="review-item-label">${label}</div><div class="review-item-value">${esc(value)}</div></div>`;
+}
+
+function reviewRow(label, value) {
+  return `<div class="review-row"><div class="review-row-label">${label}</div><div class="review-row-value">${esc(value) || '<em style="color:var(--gray)">—</em>'}</div></div>`;
+}
+
+// ─── NAVIGATION ───
+let currentStep = 0;
+const container = document.getElementById('stepsContainer');
+const progressFill = document.getElementById('progressFill');
+const stepLabel = document.getElementById('stepLabel');
+const stepPercent = document.getElementById('stepPercent');
+const progressWrap = document.getElementById('progressWrap');
+const navRow = document.getElementById('navRow');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const warningMsg = document.getElementById('warningMsg');
+
+function renderStep() {
+  const s = steps[currentStep];
+  container.innerHTML = `<div class="step active">${s.render()}</div>`;
+  if (s.onMount) s.onMount();
+
+  // Progress
+  const pct = Math.round(((currentStep + 1) / steps.length) * 100);
+  progressFill.style.width = pct + '%';
+  stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+  stepPercent.textContent = pct + '%';
+  progressWrap.style.display = currentStep > 0 ? 'block' : 'none';
+
+  // Nav buttons
+  navRow.style.display = 'flex';
+  prevBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
+
+  if (currentStep === steps.length - 1) {
+    nextBtn.style.display = 'none';
+  } else {
+    nextBtn.style.display = '';
+    nextBtn.textContent = 'Continue →';
+  }
+
+  warningMsg.style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function navigate(dir) {
+  const s = steps[currentStep];
+
+  if (dir === 1) {
+    s.save();
+    const err = s.validate();
+    if (err) {
+      warningMsg.textContent = '⚠️ ' + err;
+      warningMsg.style.display = 'block';
+      return;
+    }
+  } else {
+    s.save();
+  }
+
+  currentStep += dir;
+  currentStep = Math.max(0, Math.min(steps.length - 1, currentStep));
+  renderStep();
+}
+
+prevBtn.addEventListener('click', () => navigate(-1));
+nextBtn.addEventListener('click', () => navigate(1));
+
+// ─── PDF GENERATION ───
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+
+  const pageW = 215.9;
+  const pageH = 279.4;
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+  let y = 0;
+
+  const navy = [6, 55, 88];
+  const green = [0, 175, 134];
+  const darkText = [29, 37, 43];
+  const grayText = [100, 110, 120];
+  const white = [255, 255, 255];
+
+  function checkPage(needed) {
+    if (y + needed > pageH - 25) {
+      doc.addPage();
+      y = 20;
+      return true;
+    }
+    return false;
+  }
+
+  function drawHeader() {
+    // Header banner
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageW, 36, 'F');
+    // Green accent bar
+    doc.setFillColor(...green);
+    doc.rect(0, 36, pageW, 3, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 175, 134);
+    doc.text('ATLAS CORPS LEADERSHIP INSTITUTE', margin, 14);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(...white);
+    doc.text('You have discovered your mission!', margin, 28);
+    y = 46;
+  }
+
+  function sectionTitle(title) {
+    checkPage(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(...green);
+    doc.text(title, margin, y);
+    y += 2;
+    doc.setDrawColor(...green);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageW - margin, y);
+    y += 8;
+  }
+
+  function subHeading(title) {
+    checkPage(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text(title, margin + 4, y);
+    y += 6;
+  }
+
+  function fieldLabel(label) {
+    checkPage(12);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...green);
+    doc.text(label, margin + 8, y);
+    y += 5;
+  }
+
+  function fieldValue(value) {
+    checkPage(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...darkText);
+    const lines = doc.splitTextToSize(value || '—', contentW - 16);
+    lines.forEach(line => {
+      checkPage(6);
+      doc.text(line, margin + 8, y);
+      y += 5;
+    });
+    y += 3;
+  }
+
+  function bodyText(text) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...darkText);
+    const lines = doc.splitTextToSize(text, contentW);
+    lines.forEach(line => {
+      checkPage(6);
+      doc.text(line, margin, y);
+      y += 5;
+    });
+    y += 3;
+  }
+
+  // ─── PAGE 1 ───
+  drawHeader();
+
+  // Name
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...navy);
+  doc.text('Prepared for: ' + (data.participantName || 'ACLI Scholar'), margin, y);
+  y += 8;
+
+  // Intro
+  bodyText("You have defined the vision and values for your life and, in doing so, laid the foundation from which to set long-term and short-term goals. You can now consistently measure the most effective use of your time, talents, and energies against a written constitution based on your principles.");
+  y += 2;
+
+  // Divider
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y, pageW - margin, y);
+  y += 10;
+
+  // Mission Statement
+  sectionTitle('My Mission Statement');
+  fieldValue(data.finalMission);
+  y += 4;
+
+  // Character
+  sectionTitle('Character');
+
+  bodyText('Character is built from our habits and daily choices. In the context of your personal mission statement, character represents who you aspire to be.');
+  y += 2;
+
+  subHeading('Character:');
+  fieldLabel('I will be a person who:');
+  fieldValue(data.character);
+
+  subHeading('Passion:');
+  fieldLabel('What I truly love doing at work:');
+  fieldValue(data.loveWork);
+  fieldLabel('What I truly love doing in my personal life:');
+  fieldValue(data.lovePersonal);
+
+  subHeading('Imagination:');
+  fieldLabel('If I had unlimited time and resources, and could not fail, I would:');
+  fieldValue(data.imagination);
+
+  subHeading('Vision:');
+  fieldLabel("My life's journey is...");
+  fieldValue(data.vision);
+
+  // Contributions
+  sectionTitle('Contributions & Achievements');
+
+  bodyText("By focusing on the unique contribution that is yours to make, you become grounded in purpose. There are relationships to build, communities to serve, families to strengthen, problems to solve, and great works to create.");
+  y += 2;
+
+  subHeading('Contribution:');
+  fieldLabel('My most important future contribution to the people who matter most:');
+  fieldValue(data.contribution);
+
+  subHeading('Talents:');
+  fieldLabel('My natural talents and gifts are:');
+  fieldValue(data.talents);
+
+  subHeading('Performance:');
+  fieldLabel('I am at my best when...');
+  fieldValue(data.bestWhen);
+  fieldLabel('I am at my worst when...');
+  fieldValue(data.worstWhen);
+
+  // ─── PAGE 2 (or continues) ───
+  doc.addPage();
+  y = 0;
+  drawHeader();
+
+  // Values & Principles
+  sectionTitle('Values & Principles');
+
+  bodyText("Our values and principles are the foundation of our character, contributions, and achievements. At the very center of our influence is where we engage with our vision and values — ensuring our actions are anchored in what matters most.");
+  y += 2;
+
+  subHeading('Conscience:');
+  fieldLabel('I need to make the following things a priority:');
+  fieldValue(data.conscience);
+
+  subHeading('Influence:');
+  fieldLabel('People and qualities I hope to emulate:');
+  fieldValue(data.influence1);
+  fieldValue(data.influence2);
+  fieldValue(data.influence3);
+
+  subHeading('Balance:');
+  fieldLabel('Actions I can take in each dimension of life to achieve balance:');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  checkPage(6);
+  doc.text('Physical', margin + 8, y);
+  y += 5;
+  fieldValue(data.balancePhysical);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  checkPage(6);
+  doc.text('Social/Emotional', margin + 8, y);
+  y += 5;
+  fieldValue(data.balanceSocial);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  checkPage(6);
+  doc.text('Mental', margin + 8, y);
+  y += 5;
+  fieldValue(data.balanceMental);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  checkPage(6);
+  doc.text('Spiritual', margin + 8, y);
+  y += 5;
+  fieldValue(data.balanceSpiritual);
+
+  y += 6;
+  // Divider
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.8);
+  checkPage(10);
+  doc.line(margin, y, pageW - margin, y);
+  y += 10;
+
+  // Closing
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...green);
+  checkPage(14);
+  doc.text("You've discovered your mission — but the work doesn't stop here.", margin, y);
+  y += 8;
+
+  bodyText("We encourage you to reflect on your mission statement regularly to guide your choices, set goals, and stay aligned with your purpose. Continue to write and revise as you grow — your mission is a living document.");
+  y += 6;
+
+  // Footer
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...grayText);
+  doc.text('Created with the ACLI Mission Statement Builder — Atlas Corps Leadership Institute, Cultural Vistas', margin, pageH - 12);
+
+  // Add footer to page 1 too
+  doc.setPage(1);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...grayText);
+  doc.text('Created with the ACLI Mission Statement Builder — Atlas Corps Leadership Institute, Cultural Vistas', margin, pageH - 12);
+
+  // Save
+  const safeName = (data.participantName || 'scholar').replace(/[^a-zA-Z0-9]/g, '_');
+  doc.save(`ACLI_Mission_Statement_${safeName}.pdf`);
+}
+
+// ─── INIT ───
+renderStep();
+</script>
+</body>
+</html>
