@@ -1069,10 +1069,14 @@ function generatePDF() {
   let y = 0;
 
   const navy = [6, 55, 88];
+  const navyDark = [3, 30, 48];
+  const navyMid = [10, 74, 110];
+  const cyan = [0, 173, 239];
   const green = [0, 175, 134];
   const darkText = [29, 37, 43];
   const grayText = [100, 110, 120];
   const white = [255, 255, 255];
+  const lightBg = [240, 247, 251];
 
   function checkPage(needed) {
     if (y + needed > pageH - 25) {
@@ -1084,34 +1088,68 @@ function generatePDF() {
   }
 
   function drawHeader() {
-    // Header banner
-    doc.setFillColor(...navy);
-    doc.rect(0, 0, pageW, 36, 'F');
-    // Green accent bar
-    doc.setFillColor(...green);
-    doc.rect(0, 36, pageW, 3, 'F');
+    // Multi-layer dark navy header to simulate the gradient
+    doc.setFillColor(...navyDark);
+    doc.rect(0, 0, pageW, 44, 'F');
+    // Subtle mid-navy overlay on right half for depth
+    doc.setFillColor(...navyMid);
+    doc.setGState(new doc.GState({ opacity: 0.3 }));
+    doc.rect(pageW * 0.5, 0, pageW * 0.5, 44, 'F');
+    doc.setGState(new doc.GState({ opacity: 1 }));
+    // Thin cyan accent line at bottom of header
+    doc.setFillColor(...cyan);
+    doc.rect(0, 44, pageW, 1.5, 'F');
 
+    // ACLI text logo area (left side)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(0, 175, 134);
-    doc.text('ATLAS CORPS LEADERSHIP INSTITUTE', margin, 14);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...cyan);
+    doc.text('ATLAS CORPS LEADERSHIP INSTITUTE', margin, 13);
 
+    // If logo is embedded, it would go here:
+    // doc.addImage(logoBase64, 'PNG', margin, 4, 45, 10);
+
+    // Main title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     doc.setTextColor(...white);
-    doc.text('You have discovered your mission!', margin, 28);
-    y = 46;
+    doc.text('You have discovered your mission!', margin, 30);
+
+    // Subtle subtitle
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255, 0.6);
+    doc.setTextColor(180, 210, 230);
+    doc.text('Personal Mission Statement  |  ACLI Spring 2026', margin, 38);
+
+    y = 52;
+  }
+
+  function drawFooter(pageNum) {
+    // Thin line
+    doc.setDrawColor(200, 215, 225);
+    doc.setLineWidth(0.3);
+    doc.line(margin, pageH - 18, pageW - margin, pageH - 18);
+    // Footer text
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...grayText);
+    doc.text('Created with the ACLI Mission Statement Builder  •  Atlas Corps Leadership Institute  •  Cultural Vistas', margin, pageH - 13);
+    doc.text('Page ' + pageNum, pageW - margin, pageH - 13, { align: 'right' });
   }
 
   function sectionTitle(title) {
     checkPage(20);
+    // Section title with navy background bar
+    doc.setFillColor(240, 247, 251);
+    doc.rect(margin, y - 5, contentW, 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(...green);
-    doc.text(title, margin, y);
-    y += 2;
-    doc.setDrawColor(...green);
-    doc.setLineWidth(0.5);
+    doc.setFontSize(13);
+    doc.setTextColor(...navy);
+    doc.text(title, margin + 4, y + 1);
+    y += 3;
+    doc.setDrawColor(...cyan);
+    doc.setLineWidth(0.6);
     doc.line(margin, y, pageW - margin, y);
     y += 8;
   }
@@ -1119,7 +1157,7 @@ function generatePDF() {
   function subHeading(title) {
     checkPage(14);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
     doc.setTextColor(...navy);
     doc.text(title, margin + 4, y);
     y += 6;
@@ -1128,10 +1166,15 @@ function generatePDF() {
   function fieldLabel(label) {
     checkPage(12);
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(9.5);
-    doc.setTextColor(...green);
-    doc.text(label, margin + 8, y);
-    y += 5;
+    doc.setFontSize(9);
+    doc.setTextColor(...cyan);
+    const lines = doc.splitTextToSize(label, contentW - 16);
+    lines.forEach(line => {
+      checkPage(5);
+      doc.text(line, margin + 8, y);
+      y += 4.5;
+    });
+    y += 1;
   }
 
   function fieldValue(value) {
@@ -1177,14 +1220,28 @@ function generatePDF() {
 
   // Divider
   doc.setDrawColor(...navy);
-  doc.setLineWidth(0.8);
+  doc.setLineWidth(0.6);
   doc.line(margin, y, pageW - margin, y);
   y += 10;
 
-  // Mission Statement
+  // Mission Statement - in a highlighted box
   sectionTitle('My Mission Statement');
-  fieldValue(data.finalMission);
-  y += 4;
+  // Light background box for the mission statement
+  const missionLines = doc.splitTextToSize(data.finalMission || '—', contentW - 20);
+  const missionHeight = missionLines.length * 5.5 + 12;
+  checkPage(missionHeight);
+  doc.setFillColor(240, 247, 251);
+  doc.setDrawColor(...cyan);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(margin, y - 4, contentW, missionHeight, 2, 2, 'FD');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...darkText);
+  missionLines.forEach(line => {
+    doc.text(line, margin + 10, y + 4);
+    y += 5.5;
+  });
+  y += 12;
 
   // Character
   sectionTitle('Character');
@@ -1288,34 +1345,28 @@ function generatePDF() {
   y += 6;
   // Divider
   doc.setDrawColor(...navy);
-  doc.setLineWidth(0.8);
+  doc.setLineWidth(0.6);
   checkPage(10);
   doc.line(margin, y, pageW - margin, y);
   y += 10;
 
   // Closing
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(...green);
+  doc.setFontSize(12);
+  doc.setTextColor(...navy);
   checkPage(14);
-  doc.text("You've discovered your mission — but the work doesn't stop here.", margin, y);
+  doc.text("Your mission doesn't end here.", margin, y);
   y += 8;
 
-  bodyText("We encourage you to reflect on your mission statement regularly to guide your choices, set goals, and stay aligned with your purpose. Continue to write and revise as you grow — your mission is a living document.");
+  bodyText("We encourage you to revisit your mission statement regularly to guide your choices, set goals, and stay aligned with your purpose. Continue to write and revise as you grow. Your mission is a living document.");
   y += 6;
 
-  // Footer
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...grayText);
-  doc.text('Created with the ACLI Mission Statement Builder — Atlas Corps Leadership Institute, Cultural Vistas', margin, pageH - 12);
-
-  // Add footer to page 1 too
-  doc.setPage(1);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...grayText);
-  doc.text('Created with the ACLI Mission Statement Builder — Atlas Corps Leadership Institute, Cultural Vistas', margin, pageH - 12);
+  // Draw footers on all pages
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    drawFooter(i);
+  }
 
   // Save
   const safeName = (data.participantName || 'scholar').replace(/[^a-zA-Z0-9]/g, '_');
